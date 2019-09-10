@@ -38,11 +38,9 @@ function! s:get_color_num(color_num, bit)
         let r = a:color_num/256/256                 " upper 16 bits
         let g = (a:color_num/256) % 256             " median 16 bits
         let b = a:color_num % 256                   " lower 16 bits
-        echo printf('R:%x G:%x B:%x', r, g, b)
         let r = (r+25)/51   " 0-255 => 0-5
         let g = (g+25)/51
         let b = (b+25)/51
-        echo printf('R:%x G:%x B:%x => %d', r, g, b, r*6*6 + g*6 + b + 16)
         return r*6*6 + g*6 + b + 16     " 256 color set
     elseif a:bit == 88   " 16 base color + 4*4*4 color blocks + 8 gray scales
         let r = a:color_num/256/256
@@ -61,6 +59,33 @@ endfunction
 function! s:mf_color_pallet(num)
     echo a:num
     call s:get_color_num(s:color_pallets['berry_nice'][1], 256)
+endfunction
+
+function! MF_color_pallet_test()
+    let pallet_names = keys(s:color_pallets)
+    let max_len_name = 10
+    for n in pallet_names
+        if len(n) > max_len_name
+            let max_len_name = len(n)
+        endif
+    endfor
+
+   for n in pallet_names
+       " align width
+       let space = ""
+       for i in range(max_len_name-len(n)+5)
+           let space .= " "
+       endfor
+       echo n . space
+       let ec_str = ""
+       for i in range(len(s:color_pallets[n])-1)
+           execute "highlight ColorPallet" . i . " ctermbg=" . s:get_color_num(s:color_pallets[n][i], &t_Co)
+           execut "echohl ColorPallet" . i
+           execute "echon '      '"
+       endfor
+       echohl None
+    endfor
+
 endfunction
 
 command! -nargs=1 ColorPallet call s:mf_color_pallet(<f-args>)
