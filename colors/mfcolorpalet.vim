@@ -56,11 +56,6 @@ function! s:get_color_num(color_num, bit)
     endif
 endfunction
 
-function! s:mf_color_pallet(num)
-    echo a:num
-    call s:get_color_num(s:color_pallets['berry_nice'][1], 256)
-endfunction
-
 function! MF_color_pallet_test()
     let pallet_names = keys(s:color_pallets)
     let max_len_name = 10
@@ -79,13 +74,21 @@ function! MF_color_pallet_test()
        echo n . space
        let ec_str = ""
        for i in range(len(s:color_pallets[n])-1)
-           execute "highlight ColorPallet" . i . " ctermbg=" . s:get_color_num(s:color_pallets[n][i], &t_Co)
-           execut "echohl ColorPallet" . i
-           execute "echon '      '"
+           execute "highlight ColorPallet" . i .
+                       \ " ctermfg=" . s:get_color_num(s:color_pallets[n][i], &t_Co) .
+                       \ " ctermbg=" . (s:color_pallets[n][-1]==1 ? 0 : 15)
+           execute "echohl ColorPallet" . i
+           echon 'color' . i . ' '
        endfor
        echohl None
     endfor
 
 endfunction
 
+function! s:mf_color_pallet(num)
+    echo a:num
+    call s:get_color_num(s:color_pallets['berry_nice'][1], 256)
+endfunction
+
 command! -nargs=1 ColorPallet call s:mf_color_pallet(<f-args>)
+
