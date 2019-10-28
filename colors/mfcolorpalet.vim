@@ -5,6 +5,7 @@
 "
 "
 
+""""""local variables""""""
 " color1, 2, 3, 4, 5, 6, 7, bg_black
 let s:color_pallets = {
 \ 'cappuccino'          : [0x5c331d, 0xdea25a, 0xa64e4e, 0xbb9d65, 0xeae7cc, 0x7e3e3d, 0x885f39, 0],
@@ -33,8 +34,16 @@ let s:color_pallets = {
 \ 'slumber_whip'        : [0x7b6665, 0xe7d3ab, 0xd98e76, 0xd7b468, 0xa44a4c, 0xc0886c, 0x423546, 1]
 \ }
 
+""""""global variables""""""
+if !exists('g:MFCP_ColorName')
+    let g:MFCP_ColorName = 'berry_nice'
+endif
+
+""""""local functions""""""
 function! s:get_color_num(color_num, bit)
-    if a:bit == 256   " 16 base color + 6*6*6 color blocks + 24 gray scales
+    if has("gui_running")
+        return a:color_num
+    elseif a:bit == 256   " 16 base color + 6*6*6 color blocks + 24 gray scales
         let r = a:color_num/256/256                 " upper 16 bits
         let g = (a:color_num/256) % 256             " median 16 bits
         let b = a:color_num % 256                   " lower 16 bits
@@ -56,7 +65,28 @@ function! s:get_color_num(color_num, bit)
     endif
 endfunction
 
-function! MF_color_pallet_test()
+function! s:mf_cp_init()
+
+    let g:colors_name = expand('<sfile>:t:r')
+    let bg_black = s:color_pallets[g:MFCP_ColorName][-1]
+    if bg_black == 1
+        set background=dark
+    else
+        set background=light
+    endif
+    highlight clear
+    if exists('syntax_on')
+        syntax reset
+    endif
+endfunction
+
+function! s:mf_color_pallet(num)
+    echo a:num
+    call s:get_color_num(s:color_pallets['berry_nice'][1], 256)
+endfunction
+
+""""""global functions""""""
+function! MFCP_test()
     let pallet_names = keys(s:color_pallets)
     let max_len_name = 10
     for n in pallet_names
@@ -83,11 +113,6 @@ function! MF_color_pallet_test()
        echohl None
     endfor
 
-endfunction
-
-function! s:mf_color_pallet(num)
-    echo a:num
-    call s:get_color_num(s:color_pallets['berry_nice'][1], 256)
 endfunction
 
 command! -nargs=1 ColorPallet call s:mf_color_pallet(<f-args>)
