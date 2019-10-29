@@ -42,7 +42,7 @@ endif
 """"""local functions""""""
 function! s:get_color_num(color_num, bit)
     if has("gui_running")
-        return a:color_num
+        return printf("#%6x", a:color_num)
     elseif a:bit == 256   " 16 base color + 6*6*6 color blocks + 24 gray scales
         let r = a:color_num/256/256                 " upper 16 bits
         let g = (a:color_num/256) % 256             " median 16 bits
@@ -82,7 +82,7 @@ endfunction
 
 function! s:mf_color_pallet(num)
     echo a:num
-    call s:get_color_num(s:color_pallets['berry_nice'][1], 256)
+    echo s:get_color_num(s:color_pallets['berry_nice'][1], 256)
 endfunction
 
 """"""global functions""""""
@@ -104,9 +104,15 @@ function! MFCP_test()
        echo n . space
        let ec_str = ""
        for i in range(len(s:color_pallets[n])-1)
-           execute "highlight ColorPallet" . i .
-                       \ " ctermfg=" . s:get_color_num(s:color_pallets[n][i], &t_Co) .
-                       \ " ctermbg=" . (s:color_pallets[n][-1]==1 ? 0 : 15)
+           if has('gui_running')
+               execute "highlight ColorPallet" . i .
+                           \ " guifg=" . s:get_color_num(s:color_pallets[n][i], &t_Co) .
+                           \ " guibg=" . (s:color_pallets[n][-1]==1 ? 'White' : 'Black')
+           else
+               execute "highlight ColorPallet" . i .
+                           \ " ctermfg=" . s:get_color_num(s:color_pallets[n][i], &t_Co) .
+                           \ " ctermbg=" . (s:color_pallets[n][-1]==1 ? 0 : 15)
+           endif
            execute "echohl ColorPallet" . i
            echon 'color' . i . ' '
        endfor
