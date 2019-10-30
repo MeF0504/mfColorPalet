@@ -41,27 +41,28 @@ endif
 
 """"""local functions""""""
 function! s:get_color_num(color_num, bit)
-    if has("gui_running")
-        return printf("#%6x", a:color_num)
-    elseif a:bit == 256   " 16 base color + 6*6*6 color blocks + 24 gray scales
-        let r = a:color_num/256/256                 " upper 16 bits
-        let g = (a:color_num/256) % 256             " median 16 bits
-        let b = a:color_num % 256                   " lower 16 bits
-        let r = (r+25)/51   " 0-255 => 0-5
-        let g = (g+25)/51
-        let b = (b+25)/51
-        return r*6*6 + g*6 + b + 16     " 256 color set
-    elseif a:bit == 88   " 16 base color + 4*4*4 color blocks + 8 gray scales
-        let r = a:color_num/256/256
-        let g = (a:color_num - r*256*256) / 256
-        let b = a:color_num - r*256*256 - g*256
-        let r = (r+42)/85   " 0-255 => 0-3
-        let g = (g+42)/85
-        let b = (b+42)/85
-        return r*4*4 + g*4 + b + 16     " 88 color set
+    if has('gui_running')
+        return printf("#%06x", a:color_num)
     else
-        echo 'incorrect quatization bit!'
-        return 0
+        if a:bit == 256   " 16 base color + 6*6*6 color blocks + 24 gray scales
+            let r = a:color_num/256/256                 " upper 16 bits
+            let g = (a:color_num/256) % 256             " median 16 bits
+            let b = a:color_num % 256                   " lower 16 bits
+            let r = (r+25)/51   " 0-255 => 0-5
+            let g = (g+25)/51
+            let b = (b+25)/51
+            return r*6*6 + g*6 + b + 16     " 256 color set
+        elseif a:bit == 88   " 16 base color + 4*4*4 color blocks + 8 gray scales
+            let r = a:color_num/256/256
+            let g = (a:color_num - r*256*256) / 256
+            let b = a:color_num - r*256*256 - g*256
+            let r = (r+42)/85   " 0-255 => 0-3
+            let g = (g+42)/85
+            let b = (b+42)/85
+            return r*4*4 + g*4 + b + 16     " 88 color set
+        else
+            return 'None'
+        endif
     endif
 endfunction
 
@@ -80,13 +81,41 @@ function! s:mf_cp_init()
     endif
 endfunction
 
-function! s:mf_color_pallet(num)
-    echo a:num
-    echo s:get_color_num(s:color_pallets['berry_nice'][1], 256)
+function! s:mix_color(...)
+    if a:0 == 0
+        return 0
+    elseif a:0 == 1
+        return a:1
+    else
+        let r = 0
+        let g = 0
+        let b = 0
+        for i in range(1, a:0)
+            execute "let color_num = a:" . i
+            let r += color_num/256/256                 " upper 16 bits
+            let g += (color_num/256) % 256             " median 16 bits
+            let b += color_num % 256                   " lower 16 bits
+        endfor
+        let r /= a:0
+        let g /= a:0
+        let b /= a:0
+        return r*256*256 + g*256 + b
+    endif
 endfunction
 
-""""""global functions""""""
-function! MFCP_test()
+function! s:sep_color(color_num, sep)
+    let r = a:color_num/256/256
+    let g = (a:color_num/256) % 256
+    let b = a:color_num % 256
+
+    let r /= a:sep
+    let g /= a:sep
+    let b /= a:sep
+
+    return r*256*256 + g*256 + b
+endfunction
+
+function! s:mf_color_pallet_test()
     let pallet_names = keys(s:color_pallets)
     let max_len_name = 10
     for n in pallet_names
@@ -107,7 +136,7 @@ function! MFCP_test()
            if has('gui_running')
                execute "highlight ColorPallet" . i .
                            \ " guifg=" . s:get_color_num(s:color_pallets[n][i], &t_Co) .
-                           \ " guibg=" . (s:color_pallets[n][-1]==1 ? 'White' : 'Black')
+                           \ " guibg=" . (s:color_pallets[n][-1]==1 ? 'Black' : 'White')
            else
                execute "highlight ColorPallet" . i .
                            \ " ctermfg=" . s:get_color_num(s:color_pallets[n][i], &t_Co) .
@@ -121,5 +150,17 @@ function! MFCP_test()
 
 endfunction
 
-command! -nargs=1 ColorPallet call s:mf_color_pallet(<f-args>)
+function! s:mf_color_pallet(...)
+    if a:0 == 0
+        call s:mf_color_pallet_test()
+    else
+        echo 'call main'
+    endif
+endfunction
+
+
+""""""global functions""""""
+
+
+command! -nargs=? ColorPallet call s:mf_color_pallet(<f-args>)
 
