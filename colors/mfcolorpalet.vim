@@ -6,8 +6,10 @@
 "
 
 """"""local variables""""""
+" Color Pallets {{{
 " color1, 2, 3, 4, 5, 6, 7, bg_black
 let s:color_pallets = {
+\ 'test'                : [0, 1, 2, 3, 4, 5, 6, 0],
 \ 'cappuccino'          : [0x5c331d, 0xdea25a, 0xa64e4e, 0xbb9d65, 0xeae7cc, 0x7e3e3d, 0x885f39, 0],
 \ 'summer_time_love'    : [0x8cc5e2, 0xe9d15b, 0xf9f33f, 0x547fbf, 0xe0e46b, 0xdd9724, 0x9dc13a, 0],
 \ 'love_in_foreign'     : [0x7fb7cf, 0xc5bb9f, 0xd1737b, 0xf6f3f0, 0x59585a, 0x899eaf, 0xd8aeaf, 0],
@@ -33,10 +35,12 @@ let s:color_pallets = {
 \ 'angel_fish'          : [0xe2c13b, 0xc869a0, 0x5e9bd7, 0xede0c0, 0x4d81bf, 0xa29374, 0xe4b1c7, 1],
 \ 'slumber_whip'        : [0x7b6665, 0xe7d3ab, 0xd98e76, 0xd7b468, 0xa44a4c, 0xc0886c, 0x423546, 1]
 \ }
+" }}}
 
 """"""global variables""""""
 if !exists('g:MFCP_ColorName')
-    let g:MFCP_ColorName = 'berry_nice'
+    "let g:MFCP_ColorName = 'berry_nice'
+    let g:MFCP_ColorName = 'test'
 endif
 
 """"""local functions""""""
@@ -91,7 +95,7 @@ function! s:mix_color(...)
         let g = 0
         let b = 0
         for i in range(1, a:0)
-            execute "let color_num = a:" . i
+            let color_num = a:{i}
             let r += color_num/256/256                 " upper 16 bits
             let g += (color_num/256) % 256             " median 16 bits
             let b += color_num % 256                   " lower 16 bits
@@ -113,6 +117,109 @@ function! s:sep_color(color_num, sep)
     let b /= a:sep
 
     return r*256*256 + g*256 + b
+endfunction
+
+function! s:get_color(group)
+    " return termfg, termbg, term
+
+    function! s:gc(num)
+        return s:color_pallets[g:MFCP_ColorName][a:num]
+    endfunction
+
+    let l:normal = s:color_pallets[g:MFCP_ColorName][-1]==1 ? 0xe4e4e4e4 : 0x121212
+    let l:bg_color = s:color_pallets[g:MFCP_ColorName][-1]==1 ? 0x080808 : 0xeeeeee
+
+    if type(a:group) != 1
+        return ["None", "None", "None"]
+    endif
+
+    if a:group == "Normal"
+        return [l:normal, "None", "None"]
+    elseif a:group == "Comment"
+        return [s:gc(5), "None", "None"]
+    elseif a:group == "Constant"
+        return [s:mix_color(s:gc(3),s:gc(4)), "None", "None"]
+    elseif a:group == "String"
+        return [s:gc(4), "None", "None"]
+    elseif a:group == "Identifiler"
+        return [s:gc(2), "None", "None"]
+    elseif a:group == "Ignore"
+        return [s:gc(6), "None", "None"]
+    elseif a:group == "Number"
+        return [s:gc(3), "None", "None"]
+    elseif a:group == "PreProc"
+        return [s:mix_color(s:gc(0), s:gc(1)), "None", "Bold"]
+    elseif a:group == "Special"
+        return [s:sep_color(s:gc(0), 2), "None", "None"]
+    elseif a:group == "SpecialChar"
+        return [s:sep_color(s:gc(0), 2), s:sep_color(s:gc(6), 3), "None"]
+    elseif a:group == "SpecialKey"
+        return "Special"
+    elseif a:group == "Statement"
+        return [s:gc(1), "None", "None"]
+    elseif a:group == "Todo"
+        return [s:gc(0), "None", "None"]
+    elseif a:group == "Type"
+        return [s:mix_color(s:gc(1), s:gc(2)), "None", "None"]
+    elseif a:group == "Underlined"
+        return [s:gc(0), "None", "Bold"]
+    elseif a:group == "Search"
+        return ["None", s:mix_color(s:gc(2), s:gc(3)), "None"]
+    elseif a:group == "IncSearch"
+        return "Search"
+    elseif a:group == "ModeMsg"
+        return [s:sep_color(s:gc(5), 2) , "None", "None"]
+    elseif a:group == "MoreMsg"
+        return [s:sep_color(s:gc(5), 2) , "None", "None"]
+    elseif a:group == "StatusLine"
+        return ["None", s:mix_color(s:gc(1), s:gc(3)), "None"]
+    elseif a:group == "WildMenu"
+        return [s:mix_color(s:gc(1), s:gc(3)), "None", "None"]
+    elseif a:group == "Pmenu"
+        return [s:mix_color(s:gc(1), s:gc(2), s:gc(3)), s:mix_color(s:gc(5), s:gc(6)), "None"]
+    elseif a:group == "PmenuSel"
+        return [s:mix_color(s:gc(5), s:gc(6)), s:mix_color(s:gc(1), s:gc(2), s:gc(3)), "None"]
+    elseif a:group == "PmenuSbar"
+        return [s:gc(3), s:mix_color(s:gc(4), s:gc(5)), "None"]
+    elseif a:group == "PmenuThumb"
+        return [s:mix_color(s:gc(4), s:gc(5)), s:gc(3), "None"]
+    elseif a:group == "Directory"
+        return [s:mix_color(s:gc(0), s:gc(2)), "None", "None"]
+    elseif a:group == "NonText"
+        return [s:mix_color(s:gc(4), s:gc(6)), "None", "None"]
+    elseif a:group == "Title"
+        return [s:mix_color(s:gc(0), s:gc(1)), "None", "None"]
+    elseif a:group == "Visual"
+        return [l:normal, s:mix_color(s:gc(3), s:gc(5)), "None"]
+    elseif a:group == "Folded"
+        return [l:normal, s:mix_color(s:gc(3), s:gc(5), s:gc(6)), "Normal"]
+    elseif a:group == "FoldColumn"
+        return [s:mix_color(s:gc(5), s:gc(6)), l:bg_color, "None"]
+    elseif a:group == "DiffText"
+        return [l:normal, s:mix_color(s:gc(4), s:gc(5)), "None"]
+    elseif a:group == "DiffChange"
+        return [l:normal, s:mix_color(s:gc(4), s:gc(5)), "None"]
+    elseif a:group == "DiffDelete"
+        return [l:normal, s:gc(0), "None"]
+    elseif a:group == "DiffAdd"
+        return [l:normal, s:gc(1), "None"]
+    elseif a:group == "Conceal"
+        return [s:mix_color(s:gc(3), s:gc(5)), "None", "None"]
+    elseif a:group == "ColorColumn"
+        return ["None", s:mix_color(s:gc(4), s:gc(6)), "None"]
+    elseif a:group == "SpellBad"
+        return [l:normal, s:mix_color(s:gc(1), s:gc(2)), "None"]
+    elseif a:group == "SpellRare"
+        return [l:normal, s:mix_color(s:gc(1), s:gc(3)), "None"]
+    elseif a:group == "SpellLocal"
+        return [l:normal, s:mix_color(s:gc(1), s:gc(4)), "None"]
+    elseif a:group == "SpellCap"
+        return [l:normal, s:mix_color(s:gc(1), s:gc(5)), "None"]
+    elseif a:group == "MatchParen"
+        return [l:normal, s:mix_color(s:gc(2), s:gc(4), s:gc(6)), "None"]
+    else
+        return ["None", "None", "None"]
+    endif
 endfunction
 
 function! s:mf_color_pallet_test()
@@ -163,4 +270,54 @@ endfunction
 
 
 command! -nargs=? ColorPallet call s:mf_color_pallet(<f-args>)
+
+let s:test = [
+            \"Normal",
+            \"Comment",
+            \"Constant",
+            \"String",
+            \"Identifier",
+            \"Ignore",
+            \"Number",
+            \"PreProc",
+            \"Special",
+            \"Statement",
+            \"Todo",
+            \"Type",
+            \"Underlined",
+            \"Search",
+            \"ModeMsg",
+            \"MoreMsg",
+            \"StatusLine",
+            \"Pmenu",
+            \"PmenuSbar",
+            \"Directory",
+            \"NonText",
+            \"Title",
+            \"Visual",
+            \"Folded",
+            \"FoldColumn",
+            \"DiffText",
+            \"DiffChange",
+            \"DiffDelete",
+            \"DiffAdd",
+            \"Conceal",
+            \"ColorColumn",
+            \"SpellBad",
+            \"SpellRare",
+            \"SpellLocal",
+            \"SpellCap",
+            \"MatchParen",
+            \"SpecialChar",
+            \"SpecialKey",
+            \"IncSearch",
+            \"WildMenu",
+            \"PmenuSel",
+            \"PmenuThumb",
+            \]
+
+for s:t in s:test
+    echo s:t
+    echo s:get_color(s:t)
+endfor
 
